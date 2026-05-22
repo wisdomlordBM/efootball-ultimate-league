@@ -1,75 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>eFootball Ultimate League</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Efootball Ultimate League</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-/* SAME DESIGN — unchanged */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background:#060b18; font-family:'Barlow Condensed',sans-serif; color:#e2e8f0; padding:16px;}
-.wrap{max-width:860px;margin:0 auto;background:#0a0e1a;border-radius:14px;overflow:hidden;border:1px solid #1e2d4a;}
-.header{background:#0d1530;padding:20px;text-align:center;border-bottom:2px solid #f5c518;}
-.header-title{font-size:34px;font-weight:800;color:#fff;}
-.header-title span{color:#f5c518;}
-.info-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px;background:#0d1530;}
-.info-card{background:#111827;border:1px solid #1e2d4a;border-radius:8px;padding:10px;text-align:center;}
-.info-card-val{font-size:20px;font-weight:800;color:#f5c518;}
-table{width:100%;border-collapse:collapse;}
-th,td{padding:8px;text-align:center;}
-thead{background:#111827;}
-.team-cell{text-align:left;}
-.pos-1{background:#c9a227;}
-.pos-2{background:#7a7a7a;}
-.pos-3{background:#8b4513;}
-.pos-other{background:#1e2d4a;}
-.btn-submit{background:#f5c518;border:none;padding:10px;font-weight:800;cursor:pointer;width:100%;}
+body{
+background:#050816;
+font-family:'Barlow Condensed',sans-serif;
+color:white;
+padding:10px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+background:#0b1226;
+border-radius:15px;
+padding:15px;
+}
+
+.title{
+text-align:center;
+font-size:28px;
+font-weight:800;
+}
+
+.title span{color:#f5c518;}
+
+.table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+font-size:14px;
+}
+
+.table th{
+background:#101935;
+padding:10px;
+color:#aaa;
+}
+
+.table td{
+padding:10px;
+text-align:center;
+border-bottom:1px solid #1f2a44;
+}
+
+.team{
+text-align:left;
+font-weight:600;
+}
+
+.pts{
+color:#f5c518;
+font-weight:800;
+}
+
+.top1{background:#2e2a00;}
+.top2{background:#1f1f1f;}
+.top3{background:#2a1b00;}
+
+.admin-btn{
+background:#f5c518;
+border:none;
+padding:10px;
+width:100%;
+margin-top:10px;
+font-weight:700;
+}
+
+.hidden{display:none;}
+
+input,select{
+width:100%;
+padding:8px;
+margin:5px 0;
+background:#101935;
+border:none;
+color:white;
+}
+
+.history{
+margin-top:15px;
+font-size:13px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="wrap">
-<div class="header">
-<div class="header-title"><span>eFOOTBALL</span> ULTIMATE LEAGUE</div>
-</div>
+<div class="container">
 
-<div class="info-bar">
-<div class="info-card"><div>Matches</div><div id="total">0</div></div>
-</div>
+<div class="title"><span>EFOOTBALL</span> ULTIMATE LEAGUE</div>
 
-<table>
+<table class="table">
 <thead>
 <tr>
-<th>POS</th><th class="team-cell">TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>PTS</th>
+<th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>PTS</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
 </table>
 
-<br>
+<button class="admin-btn" onclick="login()">Admin Login</button>
+
+<div id="adminPanel" class="hidden">
 
 <select id="home"></select>
-<input type="number" id="hg" value="0">
-vs
-<input type="number" id="ag" value="0">
-<select id="away"></select>
+<input type="number" id="hg" placeholder="Home Goals">
 
-<button class="btn-submit" onclick="add()">Add Result</button>
+<select id="away"></select>
+<input type="number" id="ag" placeholder="Away Goals">
+
+<button class="admin-btn" onclick="add()">Add Result</button>
+
+<div class="history" id="history"></div>
+
+</div>
 
 </div>
 
 <script>
-const TEAMS = [
+const PIN="112244"; // change this
+
+const TEAMS=[
 "Pana fc","Go_ribe fc","Mhizta deco fc","Evil jp fc",
 "Demonfx fc","Hunchoxchange fc","Manchi fc","Solution fc",
 "Muna money ffc","Bm_042","Champion fc","Viper fc"
 ];
 
-let teams = JSON.parse(localStorage.getItem("teams")) || {};
-let results = JSON.parse(localStorage.getItem("results")) || [];
+let teams=JSON.parse(localStorage.getItem("teams"))||{};
+let results=JSON.parse(localStorage.getItem("results"))||[];
 
 function init(){
 if(Object.keys(teams).length===0){
@@ -93,60 +158,69 @@ return teams[b].gf-teams[a].gf;
 function render(){
 let s=sort();
 document.getElementById("table").innerHTML=s.map((t,i)=>{
-let tm=teams[t];
-return `<tr>
+let rowClass=i==0?'top1':i==1?'top2':i==2?'top3':'';
+return `<tr class="${rowClass}">
 <td>${i+1}</td>
-<td class="team-cell">${t}</td>
-<td>${tm.p}</td>
-<td>${tm.w}</td>
-<td>${tm.d}</td>
-<td>${tm.l}</td>
-<td>${tm.gf}</td>
-<td>${tm.ga}</td>
+<td class="team">${t}</td>
+<td>${teams[t].p}</td>
+<td>${teams[t].w}</td>
+<td>${teams[t].d}</td>
+<td>${teams[t].l}</td>
 <td>${gd(t)}</td>
-<td>${pts(t)}</td>
+<td class="pts">${pts(t)}</td>
 </tr>`;
 }).join("");
-
-document.getElementById("total").innerText=results.length;
 }
 
 function fill(){
-let h=document.getElementById("home");
-let a=document.getElementById("away");
 TEAMS.forEach(t=>{
-h.innerHTML+=`<option>${t}</option>`;
-a.innerHTML+=`<option>${t}</option>`;
+home.innerHTML+=`<option>${t}</option>`;
+away.innerHTML+=`<option>${t}</option>`;
 });
 }
 
 function add(){
-let home=document.getElementById("home").value;
-let away=document.getElementById("away").value;
+let h=home.value,a=away.value;
 let hg=parseInt(document.getElementById("hg").value);
 let ag=parseInt(document.getElementById("ag").value);
 
-if(home===away){alert("Pick different teams");return;}
+if(h===a)return alert("Same team!");
 
-teams[home].p++; teams[away].p++;
-teams[home].gf+=hg; teams[home].ga+=ag;
-teams[away].gf+=ag; teams[away].ga+=hg;
+teams[h].p++; teams[a].p++;
+teams[h].gf+=hg; teams[h].ga+=ag;
+teams[a].gf+=ag; teams[a].ga+=hg;
 
-if(hg>ag){teams[home].w++; teams[away].l++;}
-else if(hg<ag){teams[away].w++; teams[home].l++;}
-else{teams[home].d++; teams[away].d++;}
+if(hg>ag){teams[h].w++; teams[a].l++;}
+else if(hg<ag){teams[a].w++; teams[h].l++;}
+else{teams[h].d++; teams[a].d++;}
 
-results.push({home,away,hg,ag});
+results.push(`${h} ${hg}-${ag} ${a}`);
 
 localStorage.setItem("teams",JSON.stringify(teams));
 localStorage.setItem("results",JSON.stringify(results));
 
 render();
+showHistory();
+}
+
+function showHistory(){
+document.getElementById("history").innerHTML=
+results.slice(-10).reverse().map(r=>`• ${r}`).join("<br>");
+}
+
+function login(){
+let p=prompt("Enter Admin PIN");
+if(p===PIN){
+document.getElementById("adminPanel").classList.remove("hidden");
+}else{
+alert("Wrong PIN");
+}
 }
 
 init();
 fill();
 render();
+showHistory();
 </script>
 
 </body>
