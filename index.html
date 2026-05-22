@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>eFootball Ultimate League</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+<style>
+/* SAME DESIGN — unchanged */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background:#060b18; font-family:'Barlow Condensed',sans-serif; color:#e2e8f0; padding:16px;}
+.wrap{max-width:860px;margin:0 auto;background:#0a0e1a;border-radius:14px;overflow:hidden;border:1px solid #1e2d4a;}
+.header{background:#0d1530;padding:20px;text-align:center;border-bottom:2px solid #f5c518;}
+.header-title{font-size:34px;font-weight:800;color:#fff;}
+.header-title span{color:#f5c518;}
+.info-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px;background:#0d1530;}
+.info-card{background:#111827;border:1px solid #1e2d4a;border-radius:8px;padding:10px;text-align:center;}
+.info-card-val{font-size:20px;font-weight:800;color:#f5c518;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:8px;text-align:center;}
+thead{background:#111827;}
+.team-cell{text-align:left;}
+.pos-1{background:#c9a227;}
+.pos-2{background:#7a7a7a;}
+.pos-3{background:#8b4513;}
+.pos-other{background:#1e2d4a;}
+.btn-submit{background:#f5c518;border:none;padding:10px;font-weight:800;cursor:pointer;width:100%;}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+<div class="header">
+<div class="header-title"><span>eFOOTBALL</span> ULTIMATE LEAGUE</div>
+</div>
+
+<div class="info-bar">
+<div class="info-card"><div>Matches</div><div id="total">0</div></div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>POS</th><th class="team-cell">TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>PTS</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+<br>
+
+<select id="home"></select>
+<input type="number" id="hg" value="0">
+vs
+<input type="number" id="ag" value="0">
+<select id="away"></select>
+
+<button class="btn-submit" onclick="add()">Add Result</button>
+
+</div>
+
+<script>
+const TEAMS = [
+"Pana fc","Go_ribe fc","Mhizta deco fc","Evil jp fc",
+"Demonfx fc","Hunchoxchange fc","Manchi fc","Solution fc",
+"Muna money ffc","Bm_042","Champion fc","Viper fc"
+];
+
+let teams = JSON.parse(localStorage.getItem("teams")) || {};
+let results = JSON.parse(localStorage.getItem("results")) || [];
+
+function init(){
+if(Object.keys(teams).length===0){
+TEAMS.forEach(t=>{
+teams[t]={p:0,w:0,d:0,l:0,gf:0,ga:0};
+});
+}
+}
+
+function pts(t){return teams[t].w*3+teams[t].d;}
+function gd(t){return teams[t].gf-teams[t].ga;}
+
+function sort(){
+return TEAMS.sort((a,b)=>{
+if(pts(b)!=pts(a))return pts(b)-pts(a);
+if(gd(b)!=gd(a))return gd(b)-gd(a);
+return teams[b].gf-teams[a].gf;
+});
+}
+
+function render(){
+let s=sort();
+document.getElementById("table").innerHTML=s.map((t,i)=>{
+let tm=teams[t];
+return `<tr>
+<td>${i+1}</td>
+<td class="team-cell">${t}</td>
+<td>${tm.p}</td>
+<td>${tm.w}</td>
+<td>${tm.d}</td>
+<td>${tm.l}</td>
+<td>${tm.gf}</td>
+<td>${tm.ga}</td>
+<td>${gd(t)}</td>
+<td>${pts(t)}</td>
+</tr>`;
+}).join("");
+
+document.getElementById("total").innerText=results.length;
+}
+
+function fill(){
+let h=document.getElementById("home");
+let a=document.getElementById("away");
+TEAMS.forEach(t=>{
+h.innerHTML+=`<option>${t}</option>`;
+a.innerHTML+=`<option>${t}</option>`;
+});
+}
+
+function add(){
+let home=document.getElementById("home").value;
+let away=document.getElementById("away").value;
+let hg=parseInt(document.getElementById("hg").value);
+let ag=parseInt(document.getElementById("ag").value);
+
+if(home===away){alert("Pick different teams");return;}
+
+teams[home].p++; teams[away].p++;
+teams[home].gf+=hg; teams[home].ga+=ag;
+teams[away].gf+=ag; teams[away].ga+=hg;
+
+if(hg>ag){teams[home].w++; teams[away].l++;}
+else if(hg<ag){teams[away].w++; teams[home].l++;}
+else{teams[home].d++; teams[away].d++;}
+
+results.push({home,away,hg,ag});
+
+localStorage.setItem("teams",JSON.stringify(teams));
+localStorage.setItem("results",JSON.stringify(results));
+
+render();
+}
+
+init();
+fill();
+render();
+</script>
+
+</body>
+</html>
