@@ -124,103 +124,99 @@ font-size:13px;
 
 </div>
 
-<script>
-const PIN="112244"; // change this
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-const TEAMS=[
+const firebaseConfig = {
+  apiKey: "AIzaSyCY4yEakU0Ce5nJiBQJVqqP9DAnfiqScwk",
+  authDomain: "efootball-league-7a7f9.firebaseapp.com",
+  projectId: "efootball-league-7a7f9",
+  storageBucket: "efootball-league-7a7f9.firebasestorage.app",
+  messagingSenderId: "923374666921",
+  appId: "1:923374666921:web:abeede5bd449b39479d5b8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const PIN = "112244";
+
+const TEAMS = [
 "Pana fc","Go_ribe fc","Mhizta deco fc","Evil jp fc",
 "Demonfx fc","Hunchoxchange fc","Manchi fc","Solution fc",
 "Muna money ffc","Bm_042","Champion fc","Viper fc"
 ];
 
-let teams=JSON.parse(localStorage.getItem("teams"))||{};
-let results=JSON.parse(localStorage.getItem("results"))||[];
+let data = {};
 
-function init(){
-if(Object.keys(teams).length===0){
-TEAMS.forEach(t=>{
-teams[t]={p:0,w:0,d:0,l:0,gf:0,ga:0};
-});
-}
+function initTeams(){
+  TEAMS.forEach(t=>{
+    if(!data[t]) data[t]={p:0,w:0,d:0,l:0,gf:0,ga:0};
+  });
 }
 
-function pts(t){return teams[t].w*3+teams[t].d;}
-function gd(t){return teams[t].gf-teams[t].ga;}
-
-function sort(){
-return TEAMS.sort((a,b)=>{
-if(pts(b)!=pts(a))return pts(b)-pts(a);
-if(gd(b)!=gd(a))return gd(b)-gd(a);
-return teams[b].gf-teams[a].gf;
-});
-}
+function pts(t){ return data[t].w*3 + data[t].d; }
+function gd(t){ return data[t].gf - data[t].ga; }
 
 function render(){
-let s=sort();
-document.getElementById("table").innerHTML=s.map((t,i)=>{
-let rowClass=i==0?'top1':i==1?'top2':i==2?'top3':'';
-return `<tr class="${rowClass}">
-<td>${i+1}</td>
-<td class="team">${t}</td>
-<td>${teams[t].p}</td>
-<td>${teams[t].w}</td>
-<td>${teams[t].d}</td>
-<td>${teams[t].l}</td>
-<td>${gd(t)}</td>
-<td class="pts">${pts(t)}</td>
-</tr>`;
-}).join("");
+  let s=[...TEAMS].sort((a,b)=>pts(b)-pts(a)||gd(b)-gd(a));
+
+  document.getElementById("table").innerHTML = s.map((t,i)=>`
+  <tr>
+    <td>${i+1}</td>
+    <td class="team">${t}</td>
+    <td>${data[t].p}</td>
+    <td>${data[t].w}</td>
+    <td>${data[t].d}</td>
+    <td>${data[t].l}</td>
+    <td>${gd(t)}</td>
+    <td class="pts">${pts(t)}</td>
+  </tr>`).join("");
 }
 
-function fill(){
-TEAMS.forEach(t=>{
-home.innerHTML+=`<option>${t}</option>`;
-away.innerHTML+=`<option>${t}</option>`;
+// 🔥 LIVE SYNC
+onSnapshot(doc(db,"league","table"), (snap)=>{
+  data = snap.data() || {};
+  initTeams();
+  render();
 });
-}
 
-function add(){
-let h=home.value,a=away.value;
-let hg=parseInt(document.getElementById("hg").value);
-let ag=parseInt(document.getElementById("ag").value);
+// ADD RESULT
+window.add = async function(){
+  let h = home.value;
+  let a = away.value;
+  let hg = +hg.value;
+  let ag = +ag.value;
 
-if(h===a)return alert("Same team!");
+  if(h===a) return alert("Same team!");
 
-teams[h].p++; teams[a].p++;
-teams[h].gf+=hg; teams[h].ga+=ag;
-teams[a].gf+=ag; teams[a].ga+=hg;
+  data[h].p++; data[a].p++;
+  data[h].gf+=hg; data[h].ga+=ag;
+  data[a].gf+=ag; data[a].ga+=hg;
 
-if(hg>ag){teams[h].w++; teams[a].l++;}
-else if(hg<ag){teams[a].w++; teams[h].l++;}
-else{teams[h].d++; teams[a].d++;}
+  if(hg>ag){data[h].w++; data[a].l++;}
+  else if(hg<ag){data[a].w++; data[h].l++;}
+  else{data[h].d++; data[a].d++;}
 
-results.push(`${h} ${hg}-${ag} ${a}`);
+  await setDoc(doc(db,"league","table"), data);
+};
 
-localStorage.setItem("teams",JSON.stringify(teams));
-localStorage.setItem("results",JSON.stringify(results));
+// ADMIN LOGIN
+window.login = function(){
+  let p = prompt("Enter Admin PIN");
+  if(p === PIN){
+    document.getElementById("adminPanel").classList.remove("hidden");
+  } else {
+    alert("Wrong PIN");
+  }
+};
 
-render();
-showHistory();
-}
-
-function showHistory(){
-document.getElementById("history").innerHTML=
-results.slice(-10).reverse().map(r=>`• ${r}`).join("<br>");
-}
-
-function login(){
-let p=prompt("Enter Admin PIN");
-if(p===PIN){
-document.getElementById("adminPanel").classList.remove("hidden");
-}else{
-alert("Wrong PIN");
-}
-}
-
-init();
-fill();
-render();
-showHistory();
+// FILL SELECT
+TEAMS.forEach(t=>{
+  home.innerHTML += `<option>${t}</option>`;
+  away.innerHTML += `<option>${t}</option>`;
+});
 </script>
 
 </body>
