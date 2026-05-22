@@ -9,118 +9,136 @@
 
 <style>
 body{
-background:#050816;
+background:#060b18;
 font-family:'Barlow Condensed',sans-serif;
-color:white;
+color:#e2e8f0;
 padding:10px;
 }
 
-.container{
+.wrap{
 max-width:900px;
 margin:auto;
-background:#0b1226;
-border-radius:15px;
-padding:15px;
+background:#0a0e1a;
+border-radius:14px;
+overflow:hidden;
+border:1px solid #1e2d4a;
 }
 
-.title{
+.header{
+background:#0d1530;
+padding:20px;
 text-align:center;
-font-size:28px;
-font-weight:800;
+border-bottom:2px solid #f5c518;
 }
 
-.title span{color:#f5c518;}
+.header-title{
+font-size:30px;
+font-weight:800;
+color:#fff;
+}
+.header-title span{color:#f5c518;}
 
-.table{
+table{
 width:100%;
 border-collapse:collapse;
-margin-top:15px;
-font-size:14px;
 }
 
-.table th{
-background:#101935;
+th{
+background:#111827;
 padding:10px;
-color:#aaa;
+font-size:12px;
+color:#94a3b8;
 }
 
-.table td{
+td{
 padding:10px;
 text-align:center;
-border-bottom:1px solid #1f2a44;
+border-bottom:1px solid #1e293b;
 }
 
-.team{
-text-align:left;
-font-weight:600;
+.team{text-align:left;font-weight:700;}
+
+.pts{color:#f5c518;font-weight:800;}
+
+.gd-pos{color:#4ade80;}
+.gd-neg{color:#f87171;}
+
+.pos1{background:#c9a227;}
+.pos2{background:#7a7a7a;}
+.pos3{background:#8b4513;}
+
+.form{
+display:flex;
+justify-content:center;
+gap:3px;
 }
 
-.pts{
-color:#f5c518;
-font-weight:800;
+.dot{
+width:10px;height:10px;border-radius:50%;
+border:1px solid #334155;
 }
 
-.top1{background:#2e2a00;}
-.top2{background:#1f1f1f;}
-.top3{background:#2a1b00;}
+.w{background:#16a34a;}
+.d{background:#ca8a04;}
+.l{background:#dc2626;}
 
 .admin-btn{
 background:#f5c518;
 border:none;
 padding:10px;
 width:100%;
+font-weight:800;
 margin-top:10px;
-font-weight:700;
 }
-
-.hidden{display:none;}
 
 input,select{
 width:100%;
 padding:8px;
 margin:5px 0;
-background:#101935;
+background:#111827;
 border:none;
 color:white;
 }
 
+.hidden{display:none;}
+
 .history{
-margin-top:15px;
+padding:10px;
 font-size:13px;
+max-height:150px;
+overflow:auto;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="wrap">
 
-<div class="title"><span>EFOOTBALL</span> ULTIMATE LEAGUE</div>
+<div class="header">
+<div class="header-title"><span>EFOOTBALL</span> ULTIMATE LEAGUE</div>
+</div>
 
-<table class="table">
+<table>
 <thead>
 <tr>
-<th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>PTS</th>
+<th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>PTS</th><th>FORM</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
 </table>
 
-<button class="admin-btn" onclick="login()">Admin Login</button>
+<button class="admin-btn" onclick="login()">Admin</button>
 
 <div id="adminPanel" class="hidden">
-
 <select id="home"></select>
 <input type="number" id="hg" placeholder="Home Goals">
-
 <select id="away"></select>
 <input type="number" id="ag" placeholder="Away Goals">
-
 <button class="admin-btn" onclick="add()">Add Result</button>
+</div>
 
 <div class="history" id="history"></div>
-
-</div>
 
 </div>
 
@@ -140,82 +158,99 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const PIN = "112244";
+const PIN="112244";
 
-const TEAMS = [
+const TEAMS=[
 "Pana fc","Go_ribe fc","Mhizta deco fc","Evil jp fc",
 "Demonfx fc","Hunchoxchange fc","Manchi fc","Solution fc",
 "Muna money ffc","Bm_042","Champion fc","Viper fc"
 ];
 
-let data = {};
+const home=document.getElementById("home");
+const away=document.getElementById("away");
 
-function initTeams(){
-  TEAMS.forEach(t=>{
-    if(!data[t]) data[t]={p:0,w:0,d:0,l:0,gf:0,ga:0};
-  });
+let data={}, history=[];
+
+function init(){
+TEAMS.forEach(t=>{
+if(!data[t]) data[t]={p:0,w:0,d:0,l:0,gf:0,ga:0,form:[]};
+});
 }
 
-function pts(t){ return data[t].w*3 + data[t].d; }
-function gd(t){ return data[t].gf - data[t].ga; }
+function pts(t){return data[t].w*3+data[t].d;}
+function gd(t){return data[t].gf-data[t].ga;}
 
 function render(){
-  let s=[...TEAMS].sort((a,b)=>pts(b)-pts(a)||gd(b)-gd(a));
+let s=[...TEAMS].sort((a,b)=>pts(b)-pts(a)||gd(b)-gd(a));
 
-  document.getElementById("table").innerHTML = s.map((t,i)=>`
-  <tr>
-    <td>${i+1}</td>
-    <td class="team">${t}</td>
-    <td>${data[t].p}</td>
-    <td>${data[t].w}</td>
-    <td>${data[t].d}</td>
-    <td>${data[t].l}</td>
-    <td>${gd(t)}</td>
-    <td class="pts">${pts(t)}</td>
-  </tr>`).join("");
+document.getElementById("table").innerHTML=s.map((t,i)=>{
+let g=gd(t);
+let formDots=data[t].form.slice(-5).map(f=>`<div class="dot ${f.toLowerCase()}"></div>`).join("");
+
+return `<tr class="${i==0?'pos1':i==1?'pos2':i==2?'pos3':''}">
+<td>${i+1}</td>
+<td class="team">${t}</td>
+<td>${data[t].p}</td>
+<td>${data[t].w}</td>
+<td>${data[t].d}</td>
+<td>${data[t].l}</td>
+<td class="${g>0?'gd-pos':g<0?'gd-neg':''}">${g}</td>
+<td class="pts">${pts(t)}</td>
+<td><div class="form">${formDots}</div></td>
+</tr>`;
+}).join("");
+
+document.getElementById("history").innerHTML=
+history.slice(-10).reverse().map(r=>`• ${r}`).join("<br>");
 }
 
-// 🔥 LIVE SYNC
-onSnapshot(doc(db,"league","table"), (snap)=>{
-  data = snap.data() || {};
-  initTeams();
-  render();
+// LIVE DATA
+onSnapshot(doc(db,"league","table"),snap=>{
+let d=snap.data();
+if(d){
+data=d.teams||{};
+history=d.history||[];
+}
+init();
+render();
 });
 
 // ADD RESULT
-window.add = async function(){
-  let h = home.value;
-  let a = away.value;
-  let hg = +hg.value;
-  let ag = +ag.value;
+window.add=async function(){
+let h=home.value,a=away.value;
+let hg=+document.getElementById("hg").value;
+let ag=+document.getElementById("ag").value;
 
-  if(h===a) return alert("Same team!");
+if(h===a)return alert("Same team");
 
-  data[h].p++; data[a].p++;
-  data[h].gf+=hg; data[h].ga+=ag;
-  data[a].gf+=ag; data[a].ga+=hg;
+data[h].p++; data[a].p++;
+data[h].gf+=hg; data[h].ga+=ag;
+data[a].gf+=ag; data[a].ga+=hg;
 
-  if(hg>ag){data[h].w++; data[a].l++;}
-  else if(hg<ag){data[a].w++; data[h].l++;}
-  else{data[h].d++; data[a].d++;}
+if(hg>ag){data[h].w++; data[a].l++; data[h].form.push("W"); data[a].form.push("L");}
+else if(hg<ag){data[a].w++; data[h].l++; data[a].form.push("W"); data[h].form.push("L");}
+else{data[h].d++; data[a].d++; data[h].form.push("D"); data[a].form.push("D");}
 
-  await setDoc(doc(db,"league","table"), data);
+history.push(`${h} ${hg}-${ag} ${a}`);
+
+await setDoc(doc(db,"league","table"),{
+teams:data,
+history:history
+});
 };
 
-// ADMIN LOGIN
-window.login = function(){
-  let p = prompt("Enter Admin PIN");
-  if(p === PIN){
-    document.getElementById("adminPanel").classList.remove("hidden");
-  } else {
-    alert("Wrong PIN");
-  }
+// LOGIN
+window.login=function(){
+let p=prompt("PIN");
+if(p===PIN){
+document.getElementById("adminPanel").classList.remove("hidden");
+}
 };
 
 // FILL SELECT
 TEAMS.forEach(t=>{
-  home.innerHTML += `<option>${t}</option>`;
-  away.innerHTML += `<option>${t}</option>`;
+home.innerHTML+=`<option>${t}</option>`;
+away.innerHTML+=`<option>${t}</option>`;
 });
 </script>
 
